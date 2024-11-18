@@ -134,15 +134,16 @@ int main()
             -10.0f, 9.0f, -10.0f,  // Top-left corner
             10.0f,  9.0f, -10.0f   // Top-right corner
     };
-    float x1,x2,z1,z2=0.0f;
+    float x1 = 0.0f, z1 = 0.0f;  // Bottom-left corner of the wall
+    float x2 = 2.0f, z2 = 0.0f;  // Bottom-right corner of the wall
     float wallVertices[] = {
             // Triangle 1
-            x1, 0.0f, z1,  // Bottom-left
-            x2, 0.0f, z2,  // Bottom-right
+            x1, -9.0f, z1,  // Bottom-left
+            x2, -9.0f, z2,  // Bottom-right
             x2, 2.0f, z2,  // Top-right
 
             // Triangle 2
-            x1, 0.0f, z1,  // Bottom-left
+            x1, -9.0f, z1,  // Bottom-left
             x2, 2.0f, z2,  // Top-right
             x1, 2.0f, z1   // Top-left
     };
@@ -152,19 +153,26 @@ int main()
 
 
 
-    unsigned int floorVBO, floorVAO,WallVBO;
+    unsigned int floorVBO, floorVAO,WallVBO,wallVAO;
     glGenVertexArrays(1, &floorVAO);
+    glGenVertexArrays(1, &wallVAO);
     glGenBuffers(1, &floorVBO);
     glGenBuffers(1, &WallVBO);
+
     glBindVertexArray(floorVAO);
     glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
-
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
-    glBindVertexArray(0);
+    glBindVertexArray(wallVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, WallVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(wallVertices), wallVertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+
+    // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs
 
     // Set up some OpenGL state
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // Wireframe mode
@@ -233,7 +241,11 @@ int main()
         glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
         glBindVertexArray(0);
 
-        //glDrawArrays(GL_TRIANGLE_STRIP, num_angles*2+2,4);
+        glBindVertexArray(wallVAO);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
+        glBindVertexArray(0);
+
+
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -244,7 +256,9 @@ int main()
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &floorVAO);
+    glDeleteVertexArrays(1, &wallVAO);
     glDeleteBuffers(1, &floorVBO);
+    glDeleteBuffers(1, &WallVBO);
     glDeleteProgram(shaderProgram);
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
