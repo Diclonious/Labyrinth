@@ -7,6 +7,7 @@
 #include <vector>
 #include <cmath>
 #include <cstdlib> //for rand()
+#include <algorithm>
 
 
 const std::string program_name = ("GLSL shaders & uniforms");
@@ -17,6 +18,7 @@ void processInput(GLFWwindow *window);
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 800;
+
 
 static const char *vertexShaderSource ="#version 330 core\n"
                                        "layout (location = 0) in vec3 aPos;\n"
@@ -43,6 +45,8 @@ glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
+
+
 
 int main()
 {
@@ -136,16 +140,53 @@ int main()
     };
     float x1 = 0.0f, z1 = 0.0f;  // Bottom-left corner of the wall
     float x2 = 2.0f, z2 = 0.0f;  // Bottom-right corner of the wall
+//    float wallVertices[] = {
+//            // Triangle 1
+//            x1, -9.0f, z1,  // Bottom-left
+//            x2, -9.0f, z2,  // Bottom-right
+//            x2, 2.0f, z2,  // Top-right
+//
+//            // Triangle 2
+//            x1, -9.0f, z1,  // Bottom-left
+//            x2, 2.0f, z2,  // Top-right
+//            x1, 2.0f, z1   // Top-left
+  //  };
     float wallVertices[] = {
-            // Triangle 1
-            x1, -9.0f, z1,  // Bottom-left
-            x2, -9.0f, z2,  // Bottom-right
-            x2, 2.0f, z2,  // Top-right
+            // Front wall (using triangles)
+            -0.5f, -0.9f,  0.5f,
+            0.5f, -0.9f,  0.5f,
+            0.5f,  9.0f,  0.5f,
 
-            // Triangle 2
-            x1, -9.0f, z1,  // Bottom-left
-            x2, 2.0f, z2,  // Top-right
-            x1, 2.0f, z1   // Top-left
+            -0.5f, -0.9f,  0.5f,
+            0.5f,  9.0f,  0.5f,
+            -0.5f,  9.0f,  0.5f,
+
+            // Back wall
+            -0.5f, -0.9f, -0.5f,
+            -0.5f,  9.0f, -0.5f,
+            0.5f,  9.0f, -0.5f,
+
+            -0.5f, -0.9f, -0.5f,
+            0.5f,  9.0f, -0.5f,
+            0.5f, -0.9f, -0.5f,
+
+            // Left wall
+            -0.5f, -0.9f, -0.5f,
+            -0.5f, -0.9f,  0.5f,
+            -0.5f,  9.0f,  0.5f,
+
+            -0.5f, -0.9f, -0.5f,
+            -0.5f,  9.0f,  0.5f,
+            -0.5f,  9.0f, -0.5f,
+
+            // Right wall
+            0.5f, -0.9f, -0.5f,
+            0.5f,  9.0f, -0.5f,
+            0.5f,  9.0f,  0.5f,
+
+            0.5f, -0.9f, -0.5f,
+            0.5f,  9.0f,  0.5f,
+            0.5f, -0.9f,  0.5f
     };
 
 
@@ -182,6 +223,7 @@ int main()
 
     void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -192,66 +234,62 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        //matrices
+        // Matrices
         glm::mat4 model = glm::mat4(1.0f);
-        //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(60.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
-        //cameraPos + cameraFront
         view = glm::lookAt(cameraPos, cameraFront + cameraPos, cameraUp);
 
-        glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 800.0f, 0.1f, 100.0f);
+        glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 800.0f, 0.1f, 100.0f);
 
-        // retrieve the matrix uniform locations
         unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
         unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
         unsigned int projLoc = glGetUniformLocation(shaderProgram, "projection");
-        // pass them to the shaders (3 different ways)
+
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
 
-        // input
-        // -----
+        // Input
         processInput(window);
 
-        // render
-        // ------
+        // Render
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // be sure to activate the shader before any calls to glUniform
         glUseProgram(shaderProgram);
 
-        // update shader uniform
-        //double timeValue = glfwGetTime();
-        //float greenValue = static_cast<float> (sin(timeValue)) / 2.0f + 0.5f;
         int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
         glUniform4f(vertexColorLocation, 0.0f,  0.75f, 1.0f, 1.0f);
 
-        //depth
+        // Enable depth test
         glEnable(GL_DEPTH_TEST);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-
-//podot za dvizhenje
+        // First pass: Draw the filled geometry (walls, floor, ceiling)
         glBindVertexArray(floorVAO);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  // Floor
+        glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);  // Ceiling
         glBindVertexArray(0);
 
         glBindVertexArray(wallVAO);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 6);
+        glDrawArrays(GL_TRIANGLES, 0, 36);  // Walls (filled)
         glBindVertexArray(0);
 
+        // Second pass: Draw the wireframe (outlines)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Switch to wireframe mode for outlines
+        glLineWidth(3.0f);  // Set the outline width
 
+        glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);  // Black color for outline
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
+        glBindVertexArray(wallVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);  // Outlines for walls (wireframe)
+        glBindVertexArray(0);
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  // Switch back to filled mode
+
+        // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
