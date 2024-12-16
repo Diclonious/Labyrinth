@@ -138,67 +138,46 @@ int main()
             -10.0f, 9.0f, -10.0f,  // Top-left corner
             10.0f,  9.0f, -10.0f   // Top-right corner
     };
-    float x1 = 0.0f, z1 = 0.0f;  // Bottom-left corner of the wall
-    float x2 = 2.0f, z2 = 0.0f;  // Bottom-right corner of the wall
-//    float wallVertices[] = {
-//            // Triangle 1
-//            x1, -9.0f, z1,  // Bottom-left
-//            x2, -9.0f, z2,  // Bottom-right
-//            x2, 2.0f, z2,  // Top-right
-//
-//            // Triangle 2
-//            x1, -9.0f, z1,  // Bottom-left
-//            x2, 2.0f, z2,  // Top-right
-//            x1, 2.0f, z1   // Top-left
-  //  };
-    float wallVertices[] = {
-            // Front wall (using triangles)
-            -0.5f, -0.9f,  0.5f,
-            0.5f, -0.9f,  0.5f,
-            0.5f,  9.0f,  0.5f,
 
-            -0.5f, -0.9f,  0.5f,
-            0.5f,  9.0f,  0.5f,
-            -0.5f,  9.0f,  0.5f,
-
-            // Back wall
-            -0.5f, -0.9f, -0.5f,
-            -0.5f,  9.0f, -0.5f,
-            0.5f,  9.0f, -0.5f,
-
-            -0.5f, -0.9f, -0.5f,
-            0.5f,  9.0f, -0.5f,
-            0.5f, -0.9f, -0.5f,
-
-            // Left wall
-            -0.5f, -0.9f, -0.5f,
-            -0.5f, -0.9f,  0.5f,
-            -0.5f,  9.0f,  0.5f,
-
-            -0.5f, -0.9f, -0.5f,
-            -0.5f,  9.0f,  0.5f,
-            -0.5f,  9.0f, -0.5f,
-
-            // Right wall
-            0.5f, -0.9f, -0.5f,
-            0.5f,  9.0f, -0.5f,
-            0.5f,  9.0f,  0.5f,
-
-            0.5f, -0.9f, -0.5f,
-            0.5f,  9.0f,  0.5f,
-            0.5f, -0.9f,  0.5f
+    float cubeVertices[] = {
+            // positions
+            -10.0f, -0.9f, -10.0f,//0
+            -10.0f, 9.0f, -10.f,//1
+            -6.67f,  9.0f, -10.0f,//2 //1 triangle
+            -6.67f,  -0.9f, -10.0f,//3
+            -10.0f, -0.9f,  -6.67f,//4
+            -6.67f, -0.9f,  -6.67f,//5
+            -10.0f,  9.0f,  -6.67,//6
+          -6.67f,  9.0f,  -6.67//7
     };
 
+    unsigned int cubeIndices[] = {
+            0, 1, 2, 2, 3, 0, // back face
+            4, 5, 6, 6, 7, 5, // front face
+            0,4,1,4,1,6,//left face
+            3,5,2,2,5,7//right face
 
+    };
 
+    unsigned int cubeVAO, cubeVBO, cubeEBO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &cubeVBO);
+    glGenBuffers(1, &cubeEBO);
+    glBindVertexArray(cubeVAO);
 
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(cubeVertices), cubeVertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
 
-
-    unsigned int floorVBO, floorVAO,WallVBO,wallVAO;
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+//floor and ceiling
+    unsigned int floorVBO, floorVAO;
     glGenVertexArrays(1, &floorVAO);
-    glGenVertexArrays(1, &wallVAO);
+
     glGenBuffers(1, &floorVBO);
-    glGenBuffers(1, &WallVBO);
+
 
     glBindVertexArray(floorVAO);
     glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
@@ -206,11 +185,6 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glBindVertexArray(wallVAO);
-    glBindBuffer(GL_ARRAY_BUFFER, WallVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(wallVertices), wallVertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
 
 
     // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs
@@ -262,26 +236,19 @@ int main()
 
         // Enable depth test
         glEnable(GL_DEPTH_TEST);
-
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         // First pass: Draw the filled geometry (walls, floor, ceiling)
         glBindVertexArray(floorVAO);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);  // Floor
         glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);  // Ceiling
         glBindVertexArray(0);
-
-        glBindVertexArray(wallVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);  // Walls (filled)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glBindVertexArray(cubeVAO);
+        glDrawElements(GL_TRIANGLES, 100, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
-        // Second pass: Draw the wireframe (outlines)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);  // Switch to wireframe mode for outlines
-        glLineWidth(3.0f);  // Set the outline width
 
-        glUniform4f(vertexColorLocation, 0.0f, 0.0f, 0.0f, 1.0f);  // Black color for outline
 
-        glBindVertexArray(wallVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);  // Outlines for walls (wireframe)
-        glBindVertexArray(0);
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);  // Switch back to filled mode
 
@@ -294,9 +261,9 @@ int main()
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
     glDeleteVertexArrays(1, &floorVAO);
-    glDeleteVertexArrays(1, &wallVAO);
+
     glDeleteBuffers(1, &floorVBO);
-    glDeleteBuffers(1, &WallVBO);
+
     glDeleteProgram(shaderProgram);
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
