@@ -8,6 +8,8 @@
 #include <cmath>
 #include <cstdlib> //for rand()
 #include <algorithm>
+#include <functional>
+#include <random>
 
 
 const std::string program_name = ("GLSL shaders & uniforms");
@@ -46,10 +48,34 @@ glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 float deltaTime = 0.0f;	// Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
 
+std::vector<std::vector<int>> maze;
 
+void generateMaze(std::vector<std::vector<int>>& maze, int rows, int cols) {
+    // Initialize the maze with walls
+    maze.resize(rows, std::vector<int>(cols, 1));
 
-int main()
-{
+    // Start recursive backtracking from a random cell
+    std::function<void(int, int)> carve = [&](int x, int y) {
+        maze[x][y] = 0; // Mark the current cell as a path
+
+        // Directions for moving (right, down, left, up)
+        std::vector<std::pair<int, int>> directions = {{0, 2}, {2, 0}, {0, -2}, {-2, 0}};
+        std::shuffle(directions.begin(), directions.end(), std::default_random_engine(std::random_device{}()));
+
+        for (auto& [dx, dy] : directions) {
+            int nx = x + dx, ny = y + dy;
+            if (nx > 0 && nx < rows - 1 && ny > 0 && ny < cols - 1 && maze[nx][ny] == 1) {
+                // Break the wall between cells
+                maze[x + dx / 2][y + dy / 2] = 0;
+                carve(nx, ny);
+            }
+        }
+    };
+
+    carve(1, 1); // Start carving from (1, 1)
+}
+
+int main() {
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -63,9 +89,8 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, program_name.c_str(), nullptr, nullptr);
-    if (window == nullptr)
-    {
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, program_name.c_str(), nullptr, nullptr);
+    if (window == nullptr) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
@@ -75,8 +100,7 @@ int main()
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
-    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress)))
-    {
+    if (!gladLoadGLLoader(reinterpret_cast<GLADloadproc>(glfwGetProcAddress))) {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
@@ -92,8 +116,7 @@ int main()
     int success;
     char infoLog[512];
     glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
+    if (!success) {
         glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
@@ -103,8 +126,7 @@ int main()
     glCompileShader(fragmentShader);
     // check for shader compile errors
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
+    if (!success) {
         glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
@@ -127,14 +149,14 @@ int main()
 
     float cubeVertices[] = {
             // Define the vertices of the cube (each cube is 1x1)
-            -0.5f, -0.5f, -0.5f,
-            0.5f, -0.5f, -0.5f,
-            0.5f,  0.5f, -0.5f,
-            -0.5f,  0.5f, -0.5f,
-            -0.5f, -0.5f,  0.5f,
-            0.5f, -0.5f,  0.5f,
-            0.5f,  0.5f,  0.5f,
-            -0.5f,  0.5f,  0.5f
+            -0.5f, -0.9f, -0.5f,
+            0.5f, -0.9f, -0.5f,
+            0.5f, 5.0f, -0.5f,
+            -0.5f, 5.0f, -0.5f,
+            -0.5f, -0.9f, 0.5f,
+            0.5f, -0.9f, 0.5f,
+            0.5f, 5.0f, 0.5f,
+            -0.5f, 5.0f, 0.5f
     };
 
     unsigned int cubeIndices[] = {
@@ -145,6 +167,9 @@ int main()
             0, 4, 3, 4, 3, 7,  // bottom face
             1, 5, 2, 5, 2, 6   // top face
     };
+
+    generateMaze(maze, 19, 19);
+
 
     unsigned int cubeVAO, cubeVBO, cubeEBO;
     glGenVertexArrays(1, &cubeVAO);
@@ -157,7 +182,7 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *) 0);
     glEnableVertexAttribArray(0);
 
     // Set up some OpenGL state
@@ -166,73 +191,67 @@ int main()
 
     // hide the cursor
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+    void mouse_callback(GLFWwindow *window, double xpos, double ypos);
     // render loop
+
     // -----------
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)) {
+        // Handle input and update frame timing
         glfwSetCursorPosCallback(window, mouse_callback);
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+        processInput(window);
 
-        // Matrices
+        // Clear screen and set up matrices
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(shaderProgram);
+
         glm::mat4 model = glm::mat4(1.0f);
         view = glm::lookAt(cameraPos, cameraFront + cameraPos, cameraUp);
-
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 800.0f, 0.1f, 100.0f);
 
         unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
         unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
         unsigned int projLoc = glGetUniformLocation(shaderProgram, "projection");
 
-        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, &projection[0][0]);
 
-        // Input
-        processInput(window);
-
-        // Render
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        glUseProgram(shaderProgram);
-
         int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
-        glUniform4f(vertexColorLocation, 0.0f,  0.75f, 1.0f, 1.0f);
+        glUniform4f(vertexColorLocation, 0.0f, 0.75f, 1.0f, 1.0f);
 
-        // Enable depth test
-        glEnable(GL_DEPTH_TEST);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-        // Draw the cubes in a 9x9 grid
-        for (int i = 0; i < 9; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                glm::mat4 cubeModel = glm::mat4(1.0f);
-                cubeModel = glm::translate(cubeModel, glm::vec3(i - 4, -0.5f, j - 4)); // Place cubes in grid
-                glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
-
-                glBindVertexArray(cubeVAO);
-                glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        // Render maze
+        for (int i = 0; i < maze.size(); ++i) {
+            for (int j = 0; j < maze[i].size(); ++j) {
+                if (maze[i][j] == 1) { // Wall
+                    glm::mat4 cubeModel = glm::mat4(1.0f);
+                    cubeModel = glm::translate(cubeModel,
+                                               glm::vec3(j - maze[0].size() / 2, -0.5f, i - maze.size() / 2));
+                    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(cubeModel));
+                    glBindVertexArray(cubeVAO);
+                    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+                }
             }
         }
 
-        // Swap buffers and poll events
+        // Swap buffers and poll events (only once per frame)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // Optional: de-allocate all resources once they've outlived their purpose
-    glDeleteVertexArrays(1, &cubeVAO);
-    glDeleteBuffers(1, &cubeVBO);
-    glDeleteBuffers(1, &cubeEBO);
-    glDeleteProgram(shaderProgram);
+        // Optional: de-allocate all resources once they've outlived their purpose
+        glDeleteVertexArrays(1, &cubeVAO);
+        glDeleteBuffers(1, &cubeVBO);
+        glDeleteBuffers(1, &cubeEBO);
+        glDeleteProgram(shaderProgram);
 
-    // glfw: terminate, clearing all previously allocated GLFW resources.
-    glfwTerminate();
-    return 0;
-}
+        // glfw: terminate, clearing all previously allocated GLFW resources.
+        glfwTerminate();
+        return 0;
+    }
+
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------

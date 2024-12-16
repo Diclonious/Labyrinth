@@ -530,4 +530,17 @@ CMakeFiles/OpenGLPrj.dir/src/main.cpp.obj: \
  E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/algorithmfwd.h \
  E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/stl_heap.h \
  E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/stl_tempbuf.h \
- E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/uniform_int_dist.h
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/uniform_int_dist.h \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/functional \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/tuple \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/array \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/uses_allocator.h \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/invoke.h \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/refwrap.h \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/std_function.h \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/random \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/random.h \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/x86_64-w64-mingw32/bits/opt_random.h \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/random.tcc \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/numeric \
+ E:/Programs/CLion\ 2021.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/bits/stl_numeric.h
