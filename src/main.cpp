@@ -196,6 +196,7 @@ int main() {
 
     // -----------
     while (!glfwWindowShouldClose(window)) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         // Handle input and update frame timing
         glfwSetCursorPosCallback(window, mouse_callback);
         float currentFrame = glfwGetTime();
@@ -257,6 +258,29 @@ int main() {
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
+    std::vector<glm::vec3> wallCoordinates;
+
+
+    for (int i = 0; i < maze.size(); ++i) {
+        for (int j = 0; j < maze[i].size(); ++j) {
+            if (maze[i][j] == 1) { // If it's a wall
+                // Calculate the world coordinates
+                glm::vec3 wallPosition(
+                        j - maze[0].size() / 2, // X coordinate (adjusted for centering)
+                        0.0f,                  // Y coordinate (fixed at ground level)
+                        i - maze.size() / 2    // Z coordinate (adjusted for centering)
+                );
+
+                // Store the wall position
+                wallCoordinates.push_back(wallPosition);
+            }
+        }
+    }
+
+
+
+
+
     //ogranichuvanje za dvizhenje
     float minX = -10.0f;
     float maxX = 10.0f;
@@ -294,8 +318,27 @@ void processInput(GLFWwindow *window)
     {
         // Move forward
         glm::vec3 newPos = cameraPos + cameraSpeed * camera * cameraFront * 1.5f;
-        if (newPos.x > minX && newPos.x < maxX && newPos.z > minZ && newPos.z < maxZ)
+
+        // Check for collision with any wall
+        bool collision = false;
+        for (const auto& wall : wallCoordinates)
+        {
+            float distanceX = std::abs(newPos.x - wall.x);
+            float distanceZ = std::abs(newPos.z - wall.z);
+
+            // Assuming walls are 1 unit wide (adjust bounds if needed)
+            if (distanceX < 0.5f && distanceZ < 0.5f)
+            {
+                collision = true;
+                break; // Stop checking further if a collision is detected
+            }
+        }
+
+        // Update position only if no collision
+        if (!collision && newPos.x > minX && newPos.x < maxX && newPos.z > minZ && newPos.z < maxZ)
+        {
             cameraPos = newPos;
+        }
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
