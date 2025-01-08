@@ -41,7 +41,7 @@ static const char *fragmentShaderSource = "#version 330 core\n"
                                           "}\n\0";
 
 glm::mat4 view = glm::mat4(1.0f);
-glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
+glm::vec3 cameraPos   = glm::vec3(10.0f, 0.0f,  7.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
@@ -256,6 +256,26 @@ int main() {
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
+void processMovement(glm::vec3 direction, float speed, glm::vec3& position, const std::vector<glm::vec3>& walls, float wallSize = 1.0f)
+{
+    glm::vec3 newPos = position + direction * speed;
+
+    for (const auto& wall : walls)
+    {
+        float distanceX = std::abs(newPos.x - wall.x);
+        float distanceZ = std::abs(newPos.z - wall.z);
+
+        // Only check collisions on the X-Z plane
+        if (distanceX < wallSize / 2.0f && distanceZ < wallSize / 2.0f)
+        {
+            return; // Collision detected, do not update position
+        }
+    }
+
+    // Update position if no collision is detected
+    position.x = newPos.x;
+    position.z = newPos.z;
+}
 void processInput(GLFWwindow *window)
 {
     std::vector<glm::vec3> wallCoordinates;
@@ -316,50 +336,19 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
-        // Move forward
-        glm::vec3 newPos = cameraPos + cameraSpeed * camera * cameraFront * 1.5f;
-
-        // Check for collision with any wall
-        bool collision = false;
-        for (const auto& wall : wallCoordinates)
-        {
-            float distanceX = std::abs(newPos.x - wall.x);
-            float distanceZ = std::abs(newPos.z - wall.z);
-
-            // Assuming walls are 1 unit wide (adjust bounds if needed)
-            if (distanceX < 0.5f && distanceZ < 0.5f)
-            {
-                collision = true;
-                break; // Stop checking further if a collision is detected
-            }
-        }
-
-        // Update position only if no collision
-        if (!collision && newPos.x > minX && newPos.x < maxX && newPos.z > minZ && newPos.z < maxZ)
-        {
-            cameraPos = newPos;
-        }
+        processMovement(cameraFront, cameraSpeed, cameraPos, wallCoordinates);
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
-        // Move backward
-        glm::vec3 newPos = cameraPos - cameraSpeed * camera * cameraFront * 1.5f;
-        if (newPos.x > minX && newPos.x < maxX && newPos.z > minZ && newPos.z < maxZ)
-            cameraPos = newPos;
+        processMovement(-cameraFront, cameraSpeed, cameraPos, wallCoordinates);
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
-        // Move left
-        glm::vec3 newPos = cameraPos - glm::normalize(glm::cross(cameraFront * camera, cameraUp)) * cameraSpeed;
-        if (newPos.x > minX && newPos.x < maxX && newPos.z > minZ && newPos.z < maxZ)
-            cameraPos = newPos;
+        processMovement(-glm::normalize(glm::cross(cameraFront, cameraUp)), cameraSpeed, cameraPos, wallCoordinates);
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
-        // Move right
-        glm::vec3 newPos = cameraPos + glm::normalize(glm::cross(cameraFront * camera, cameraUp)) * cameraSpeed;
-        if (newPos.x > minX && newPos.x < maxX && newPos.z > minZ && newPos.z < maxZ)
-            cameraPos = newPos;
+        processMovement(glm::normalize(glm::cross(cameraFront, cameraUp)), cameraSpeed, cameraPos, wallCoordinates);
     }
     if (!isJumping && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
     {
